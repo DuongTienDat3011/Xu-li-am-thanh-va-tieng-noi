@@ -1,12 +1,12 @@
 # Báo cáo Lab 2 – CSE457: Xử lý âm thanh và tiếng nói
-## Đặc trưng tiếng nói và nhận dạng bằng DTW
+## Đặc trưng tiếng nói và nhận dạng bằng DTW + HMM + N-gram LM
 
 | Thông tin | Nội dung |
 |-----------|----------|
 | **Sinh viên** | Dương Tiến Đạt |
 | **MSSV** | 2251172268 |
 | **Học phần** | CSE457 – Xử lý âm thanh và tiếng nói |
-| **Bài** | Lab 2 – Từ MFCC đến nhận dạng từ đơn bằng DTW |
+| **Bài** | Lab 2 – MFCC + DTW + HMM Gaussian + N-gram LM + Pronunciation Lexicon |
 
 ---
 
@@ -322,5 +322,186 @@ Lab2_2251172268_DuongTienDat/
 [2] Rabiner, L.R., & Schafer, R.W. *Theory and Applications of Digital Speech Processing*. Pearson, 2011.
 
 [3] Jurafsky, D., & Martin, J.H. *Speech and Language Processing*. Prentice-Hall, 2008.
+
+[4] Đề cương chi tiết học phần CSE457 – Xử lý âm thanh và tiếng nói, TLU, 2023.
+
+---
+
+## 7. Mục 3.1 + 3.3 – Nhận dạng bằng HMM Gaussian & Acoustic Modeling
+
+> **Tài liệu:** Huang et al., Ch.8 (HMM); Ch.9 (Acoustic Modeling); Rabiner & Schafer, Ch.14 Mục 14.2–14.5
+
+### 7.1 Kiến trúc HMM
+
+**Định nghĩa HMM** λ = (A, B, π):
+
+| Ký hiệu | Tên | Ý nghĩa |
+|---------|-----|---------|
+| **A[i,j]** | Ma trận chuyển trạng thái | P(qₜ=j \| qₜ₋₁=i) |
+| **B(o\|j)** | Phân phối phát sinh quan sát | P(oₜ \| qₜ=j) = N(o; μⱼ, Σⱼ) |
+| **π[i]** | Xác suất ban đầu | P(q₁=i) |
+
+**Kiến trúc Left-to-right (Bakis model):**
+- Trạng thái chỉ tiến không lùi (phù hợp tiếng nói theo thời gian)
+- n_states = 5/từ (tương ứng phần đầu–giữa–cuối từ)
+- Self-loop (0.6) + forward (0.4) tại mỗi trạng thái
+
+### 7.2 Thuật toán Forward (α)
+
+$$\alpha_t(j) = P(O_1..O_t, q_t=j|\lambda)$$
+
+- Khởi tạo: α₁(j) = πⱼ · B(o₁|j)
+- Quy nạp: αₜ(j) = [Σᵢ αₜ₋₁(i)·A[i,j]] · B(oₜ|j)
+- Kết thúc: P(O|λ) = Σⱼ αT(j)
+- **Scaled version** để tránh underflow số học
+
+### 7.3 Viterbi Decoding
+
+$$\delta_t(j) = \max_{q_1..q_{t-1}} P(O_1..O_t, q_t=j|\lambda)$$
+
+$$\delta_t(j) = \max_i[\delta_{t-1}(i) \cdot A[i,j]] \cdot B(o_t|j)$$
+
+Backtracking từ T→1 cho chuỗi trạng thái tối ưu q\*.
+
+### 7.4 Baum-Welch (EM Training)
+
+**E-step:**
+$$\gamma_t(j) = \frac{\alpha_t(j)\beta_t(j)}{\sum_i \alpha_t(i)\beta_t(i)} = P(q_t=j|O,\lambda)$$
+
+$$\xi_t(i,j) = P(q_t=i, q_{t+1}=j|O,\lambda)$$
+
+**M-step:**
+$$\bar{A}[i,j] = \frac{\sum_t \xi_t(i,j)}{\sum_t \gamma_t(i)}, \quad \bar{\mu}_j = \frac{\sum_t \gamma_t(j) \cdot o_t}{\sum_t \gamma_t(j)}$$
+
+### 7.5 Kết quả HMM vs DTW
+
+| Phương pháp | Accuracy | Đặc điểm |
+|------------|---------|---------|
+| **HMM Gaussian** | 100.0% | Probabilistic, Baum-Welch EM, generalize tốt hơn |
+| **DTW nearest-template** | 100.0% | Deterministic, không cần training xác suất |
+
+**Nhận xét so sánh:**
+- Cả hai đạt 100% trên dataset tổng hợp nhỏ (speaker-dependent)
+- HMM mô hình hóa **phân phối xác suất** → generalize tốt hơn khi dữ liệu lớn và đa người nói
+- DTW **deterministic** → nhanh hơn, không cần nhiều dữ liệu training
+- Baum-Welch hội tụ sau 5–11 vòng với dataset 3 file/từ
+- Viterbi path cho thấy mỗi từ đi qua ~5 trạng thái tuần tự (left-to-right)
+
+---
+
+## 8. Mục 3.4 – Mô hình ngôn ngữ (N-gram Language Model)
+
+> **Tài liệu:** Huang et al., Ch.11; Jurafsky & Martin, Ch.3
+
+### 8.1 N-gram MLE
+
+$$P_{MLE}(w_n|w_1..w_{n-1}) = \frac{C(w_1..w_n)}{C(w_1..w_{n-1})}$$
+
+**Vấn đề:** Xác suất = 0 với N-gram chưa thấy trong training → PP = ∞
+
+### 8.2 Smoothing
+
+| Phương pháp | Công thức | Ưu/nhược |
+|------------|----------|---------|
+| **MLE** | C(w₁..wₙ)/C(ctx) | Chính xác nhưng zero-prob OOV |
+| **Laplace (Add-1)** | (C+1)/(C_ctx+\|V\|) | Không zero-prob nhưng over-redistribute |
+| **Backoff** | Dùng MLE nếu có; hạ bậc×0.4 nếu không | Cân bằng tốt nhất |
+
+### 8.3 Perplexity
+
+$$PP(W) = P(w_1w_2..w_N)^{-1/N} = \exp\left(-\frac{1}{N}\sum_t \log P(w_t|w_{t-1})\right)$$
+
+**Kết quả trên test set (5 câu):**
+
+| Phương pháp | Perplexity | So với random |
+|------------|-----------|--------------|
+| MLE Bigram | 4.45 | <<7 (|V|=7) |
+| Laplace Bigram | 5.00 | <<7 |
+| Backoff Bigram | 4.45 | <<7 |
+| Unigram Laplace | 6.41 | gần 7 (yếu hơn) |
+
+**Nhận xét:**
+- Bigram (PP≈4.5) tốt hơn hẳn Unigram (PP≈6.4) → context giúp dự đoán tốt hơn
+- MLE và Backoff bằng nhau trên test set đơn giản (không có OOV)
+- Laplace cao hơn một chút do mass redistribution
+- Trong hệ thống ASR thực tế, LM kết hợp với AM: score = log P(O|w) + λ·log P(w|w')
+
+---
+
+## 9. Mục 3.5 – Từ điển phát âm (Pronunciation Lexicon)
+
+> **Tài liệu:** Huang et al., Mục 9.4.4; Jurafsky & Martin, Ch.25 Mục 25.1, 25.5
+
+### 9.1 Lexical Baseforms
+
+Từ điển phát âm ánh xạ: **word → [phoneme sequence]**
+
+| ASCII | Tiếng Việt | Phoneme Sequence | IPA |
+|-------|-----------|-----------------|-----|
+| khong | Không | kh – o – ng | /kʰoŋ/ |
+| mot | Một | m – o – k_final | /moːk̚/ |
+| hai | Hai | h – a – i_final | /haːj/ |
+| ba | Ba | b – a | /baː/ |
+| bon | Bốn | b – o – n_final | /boːn/ |
+
+**Tập phoneme:** 29 phoneme (phụ âm đầu, nguyên âm, phụ âm cuối)
+
+### 9.2 G2P – Grapheme-to-Phoneme Rules
+
+Quy tắc chuyển ký tự → phoneme (longest-match greedy):
+- `kh` → /kʰ/, `ng` → /ŋ/, `ch` → /tɕ/, `tr` → /tɾ/
+- Xử lý từ OOV (ngoài từ điển) bằng rule-based fallback
+
+Ví dụ: `xin` → [`s`, `i`, `n`]; `chao` → [`ch`, `a`, `o`]
+
+### 9.3 Vai trò trong ASR
+
+```
+Acoustic Model (HMM phoneme)
+         ↓
+Pronunciation Lexicon (phoneme → word)
+         ↓
+Language Model (word → sentence)
+         ↓
+Decoder (Viterbi/Beam search)
+         ↓
+Nhận dạng kết quả
+```
+
+**Nhận xét:**
+- Tiếng Việt có 6 thanh điệu → cần mã hóa tone vào phoneme (vd: `a1` = sắc, `a2` = huyền...)
+- Từ điển phát âm chuẩn tiếng Anh: CMUDict (134,000 từ); tiếng Việt cần xây dựng riêng
+- Phoneme alignment bằng Viterbi HMM cho phép huấn luyện Context-Dependent HMM (triphone)
+- Lab này dùng whole-word HMM; hệ thống thực dùng phoneme-level HMM với triphone
+
+---
+
+## 10. Đối chiếu đầy đủ với Chương 3
+
+| Mục Chương 3 | Nội dung | File | Trạng thái |
+|---|---|---|---|
+| **3.1** Nhận dạng HMM | Forward, Viterbi, Baum-Welch | `lab2_part_hmm.py` | ✅ Đầy đủ |
+| **3.2** Trích chọn đặc trưng | MFCC, Delta | `lab2_part_abcd.py` | ✅ Đầy đủ |
+| **3.3** Acoustic Modeling | Whole-word Gaussian HMM | `lab2_part_hmm.py` | ✅ Đầy đủ |
+| **3.4** Language Modeling | Bigram MLE/Laplace/Backoff, Perplexity | `lab2_part_lm.py` | ✅ Đầy đủ |
+| **3.5** Pronunciation Lexicon | Phoneme map tiếng Việt, G2P rules | `lab2_part_lexicon.py` | ✅ Đầy đủ |
+
+---
+
+## 11. Tài liệu tham khảo (cập nhật)
+
+[1] Huang, X., Acero, A., & Hon, H-W. *Spoken Language Processing*. Prentice-Hall, 2001.
+  - Ch.8: Hidden Markov Models (Forward, Viterbi, Baum-Welch)
+  - Ch.9: Acoustic Modeling (Mục 9.3 MFCC, Mục 9.4.4 Lexical Baseforms)
+  - Ch.11: Language Modeling (N-gram, Perplexity, Smoothing)
+
+[2] Rabiner, L.R., & Schafer, R.W. *Theory and Applications of Digital Speech Processing*. Pearson, 2011.
+  - Ch.14 Mục 14.2–14.5: Công thức ASR cơ bản, Acoustic + Language model
+  - Ch.14 Mục 14.6–14.7: Search/Decoding kết hợp từ điển phát âm
+
+[3] Jurafsky, D., & Martin, J.H. *Speech and Language Processing*. Prentice-Hall, 2008.
+  - Ch.3: N-gram Language Models (MLE, Perplexity, Smoothing)
+  - Ch.25 Mục 25.1, 25.5: Phonetic Transcription, CMUDict/PRONLEX
+  - Ch.26: Automatic Speech Recognition (Feature Extraction, Acoustic Model)
 
 [4] Đề cương chi tiết học phần CSE457 – Xử lý âm thanh và tiếng nói, TLU, 2023.
