@@ -1,0 +1,14 @@
+# Từ điển phát âm tiếng Việt (simplified phoneme notation)
+# Format: WORD  PHONE_1  PHONE_2  ...  PHONE_N
+# Phone symbols dùng ASCII-friendly notation
+#
+# Phụ âm đầu: b, d, g, h, k, kh, l, m, n, ng, s, t, tr, x, z
+# Nguyên âm  : a, aa, e, ee, i, o, oo, u, uu
+# Phụ âm cuối: k_f, m_f, n_f, ng_f, p_f, t_f
+# (hậu tố _f = final position)
+
+mo      m       oo
+dong    d       oo      ng_f
+len     l       ee      n_f
+xuong   x       uu      ng_f
+dung    z       uu      ng_f
