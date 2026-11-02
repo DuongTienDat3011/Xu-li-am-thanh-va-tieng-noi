@@ -1,0 +1,4 @@
+sentence_id,text,baseline_fixed_cand_cost,viterbi_unit_selection_cost,cost_reduction_pct,chosen_candidates
+sentence1,Mời khách hàng số 23 đến quầy 5.,6291.9,4451.75,29.25,"[np.int64(2), np.int64(1), np.int64(2), np.int64(1), np.int64(2), np.int64(2), np.int64(2), np.int64(1), 2]"
+sentence2,Mời khách hàng số 107 đến quầy 2.,6359.4,4344.52,31.68,"[np.int64(2), np.int64(1), np.int64(2), np.int64(1), np.int64(2), np.int64(1), np.int64(2), np.int64(1), np.int64(1), 2]"
+sentence3,Mời khách hàng số 496 đến quầy 8.,5516.77,4512.52,18.2,"[np.int64(2), np.int64(1), np.int64(2), np.int64(1), np.int64(1), np.int64(1), np.int64(1), np.int64(2), np.int64(1), 2]"

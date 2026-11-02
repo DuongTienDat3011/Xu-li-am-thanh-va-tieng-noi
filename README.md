@@ -113,8 +113,46 @@ Mở `Lab01_2251172268.ipynb` trong VS Code hoặc Jupyter, đổi `CHOICE` đ�
 
 ---
 
+## Lab 4: Tổng hợp tiếng nói (Text-to-Speech)
+### Từ Ghép nối (Concatenative) & Unit Selection đến Tham số HMM và TTS Học sâu (Neural TTS)
+
+Thư mục: [`Lab4_2251172268_DuongTienDat/`](file:///d:/Xu-li-am-thanh-va-tieng-noi/Lab4_2251172268_DuongTienDat/)
+
+```
+Lab4_2251172268_DuongTienDat/
+├── Lab4_2251172268.ipynb          ← Notebook hoàn chỉnh (chạy từ đầu đến cuối, có Audio player & plots)
+├── report_Lab4.md                 ← Báo cáo chi tiết 8+ trang (10 câu hỏi + thực nghiệm đầy đủ)
+├── requirements.txt                ← Thư viện yêu cầu (numpy, scipy, librosa, edge-tts, soundfile, pandas...)
+├── metadata.csv                    ← Metadata 32 unit inventory (16 kHz mono, RMS=0.08)
+├── cost_analysis.csv               ← Phân tích chi phí Join/Target cost và mức giảm 29.25%
+├── ratings.csv                     ← Kết quả thử nghiệm nghe chủ quan (8 thính giả, 3 câu, 4 hệ thống)
+│
+├── generate_inventory.py           ← Khởi tạo & chuẩn hóa 32 đơn vị âm thanh
+├── lab4_text_norm.py               ← Chuẩn hóa văn bản tiếng Việt & số đếm miền hẹp
+├── lab4_concat.py                  ← Ghép nối baseline, tính join/target cost, Viterbi Unit Selection, Cross-fade
+├── lab4_prosody.py                 ← Phân tích F0, kiểm chứng F0 ≈ Fs/Np, Time-stretch 0.8x/1.2x, Pitch shift ±2 semitones
+├── lab4_hmm.py                     ← HMM Parametric Synthesis, MLPG trajectory generation, Vocoder nguồn-lọc
+├── lab4_neural.py                  ← Neural TTS học sâu siêu tự nhiên (Azure / Google Neural) cho 3 câu test
+├── lab4_eval.py                    ← Đánh giá MOS, Intelligibility, Continuity, Latency/RTF, vẽ đồ thị so sánh
+├── lab4_main.py                    ← Master runner chạy trọn vẹn toàn bộ pipeline Lab 4
+├── build_notebook_lab4.py          ← Script tạo & cập nhật Jupyter Notebook Lab4
+│
+├── units/                          ← Kho dữ liệu 32 WAV files (moi_01, moi_02, khach_01, ...)
+├── audio_output/                   ← 18 file WAV kết quả tổng hợp (raw_concat, best_concat, hmm_tts, neural_tts...)
+└── figures/                        ← 11 biểu đồ khoa học chất lượng cao (fig1 -> fig9)
+```
+
+### Cách chạy Lab 4:
+```bash
+cd Lab4_2251172268_DuongTienDat
+pip install -r requirements.txt
+python lab4_main.py
+```
+
+---
+
 ## Tài liệu tham khảo
 
 - Rabiner & Schafer, *Theory and Applications of Digital Speech Processing*, Pearson, 2010
-- Huang, Acero & Hon, *Spoken Language Processing*, Prentice-Hall, 2001
+- Huang, Acero & Hon, *Spoken Language Processing*, Prentice-Hall, 2001 - Ch. 14, 15, 16
 - Đề cương CSE457, Trường Đại học Thủy lợi, 2023
