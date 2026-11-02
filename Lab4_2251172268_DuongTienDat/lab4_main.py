@@ -160,4 +160,8 @@ def main():
     print("=" * 75)
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and ("--interactive" in sys.argv or "-i" in sys.argv):
+        from interactive_tts import interactive_menu
+        interactive_menu()
+    else:
+        main()
