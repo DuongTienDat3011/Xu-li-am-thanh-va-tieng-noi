@@ -151,6 +151,44 @@ python lab4_main.py
 
 ---
 
+## Lab 5: Khử nhiễu tiếng nói, Nhận dạng người nói và Phân tách nguồn (Speech Enhancement, Speaker Recognition and Separation)
+
+```
+Lab5_2251172268_DuongTienDat/
+├── Lab5_2251172268.ipynb          ← Notebook hoàn chỉnh (chạy từ đầu đến cuối, có Audio player & plots)
+├── report_Lab5.md                 ← Báo cáo chi tiết (12 câu hỏi + thực nghiệm đầy đủ)
+├── report_Lab5.docx               ← Báo cáo Word chuẩn học thuật chèn hình và công thức
+├── requirements.txt               ← Thư viện yêu cầu (numpy, scipy, librosa, soundfile, scikit-learn...)
+├── README.md                      ← Hướng dẫn sử dụng chi tiết
+│
+├── generate_dataset.py            ← Tạo 21 file tiếng nói sạch, 2 file nhiễu, 2 nguồn BSS
+├── lab5_utils.py                  ← Hàm tiện ích I/O 16kHz, RMS, Power, SNR, delay alignment
+├── lab5_enhancement.py            ← Spectral Subtraction & Wiener Filtering
+├── lab5_speaker_id.py             ← Trích xuất MFCC, Delta, Embedding, Cosine ID & Verification (FAR/FRR)
+├── lab5_ica.py                    ← Instantaneous Mixture 2x2, FastICA & xử lý Permutation/Sign
+├── lab5_main.py                   ← Master runner chạy trọn vẹn toàn bộ 4 phần Lab 5
+├── build_notebook_lab5.py         ← Script tạo & chạy Jupyter Notebook Lab5
+├── generate_report_docx.py        ← Script tạo báo cáo Word report_Lab5.docx
+│
+├── lab5_data/                     ← Dữ liệu âm thanh thực nghiệm (WAV PCM 16kHz Mono)
+│   ├── clean/                     ← 3 Người nói (spk01, spk02, spk03): 4 enroll, 1 dev, 2 test/người
+│   ├── noise/                     ← fan.wav (dừng) và cafeteria.wav (babble)
+│   └── separation/                ← source_A.wav và source_B.wav (5.28s, 16kHz)
+│
+└── results/                       ← Kết quả đầu ra
+    ├── audio/                     ← WAV đầu ra: noisy, enhanced_ss, enhanced_wiener, mix_mic, separated
+    └── figures/                   ← 7 biểu đồ khoa học: spectrogram, confusion matrix, FAR-FRR, ICA correlation
+```
+
+### Cách chạy Lab 5:
+```bash
+cd Lab5_2251172268_DuongTienDat
+pip install -r requirements.txt
+python lab5_main.py
+```
+
+---
+
 ## Tài liệu tham khảo
 
 - Rabiner & Schafer, *Theory and Applications of Digital Speech Processing*, Pearson, 2010
